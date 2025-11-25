@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Billing Software</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 10px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #0e56d1, #2483C5);
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .required:after {
+            content: " *";
+            color: #dc3545;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0e56d1, #2483C5);
+            border: none;
+            font-weight: 600;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            font-weight: 600;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            border: none;
+            font-weight: 600;
+        }
+        .btn-reset {
+            background: linear-gradient(135deg, #6c757d, #8e9ba7);
+            border: none;
+            font-weight: 600;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #0e56d1;
+            box-shadow: 0 0 0 0.2rem rgba(14, 86, 209, 0.25);
+        }
+        .section-title {
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            color: #0e56d1;
+            font-weight: 600;
+        }
+        .product-table th {
+            background-color: #f8f9fa;
+        }
+        .hidden-field {
+            display: none;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+        .invoice-preview {
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: white;
+        }
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #0e56d1;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body style="background-color:#e8f0fe;">
+    <div class="container-fluid mt-3"style="min-width:100%" >
+       <div class="row justify-content-center"> <h4 class="mb-3">Sale Entry Form</h4>
+             <div class="col-lg-10"style="min-width:100%">
+                <div class="card">
+                   
+                    <div class="card-body p-4">
+                        <form id="salesForm">
+                            <!-- Customer & Invoice Information -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="section-title">Customer & Invoice Information</h5>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="customerId" class="form-label required">Customer ID</label>
+                                    <input type="text" class="form-control" id="customerId" name="customerId" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="invoiceNo" class="form-label required">Invoice No.</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="invoiceNo" name="invoiceNo" readonly>
+                                        <button type="button" class="btn btn-outline-secondary" id="generateInvoiceBtn">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden Fields -->
+                            <div class="row mb-4 hidden-field">
+                                <div class="col-md-3 mb-3">
+                                    <label for="mainOffice" class="form-label">Main Office</label>
+                                    <input type="text" class="form-control" id="mainOffice" name="mainOffice" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="subOffice" class="form-label">Sub Office</label>
+                                    <input type="text" class="form-control" id="subOffice" name="subOffice" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="date" class="form-label">Date</label>
+                                    <input type="text" class="form-control" id="date" name="date" readonly>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="employeeId" class="form-label">Employee ID</label>
+                                    <input type="text" class="form-control" id="employeeId" name="employeeId" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="time" class="form-label">Time</label>
+                                    <input type="text" class="form-control" id="time" name="time" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="paymentModeMain" class="form-label">Payment Mode</label>
+                                    <select class="form-select" id="paymentModeMain" name="paymentModeMain">
+                                        <option value="Cash">Cash</option>
+                                        <option value="Credit">Credit</option>
+                                        <option value="Online">Online</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Product Entry Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="section-title">Product Details</h5>
+                                        <button type="button" class="btn btn-primary" id="addProductBtn">
+                                            <i class="fas fa-plus me-2"></i>Add Product
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Products Table -->
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered product-table" id="productsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Product ID</th>
+                                            <th>Category</th>
+                                            <th>Product</th>
+                                            <th>Item Name</th>
+                                            <th>Unit Price (₹)</th>
+                                            <th>Quantity</th>
+                                            <th>Tax GST (₹)</th>
+                                            <th>Tax CGST (₹)</th>
+                                            <th>Other Charge (₹)</th>
+                                            <th>Amount (₹)</th>
+                                            <th>Payment Mode</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productsTableBody">
+                                        <!-- Product rows will be added here dynamically -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="total-row">
+                                            <td colspan="9" class="text-end"><strong>Grand Total:</strong></td>
+                                            <td id="grandTotal">₹ 0.00</td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="row mt-4">
+                                <div class="col-md-4 mb-2">
+                                    <button type="submit" id="saveBtn" class="btn btn-success text-white w-100 py-2">
+                                        <i class="fas fa-save me-2"></i>Save Invoice
+                                    </button>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <button type="button" class="btn btn-warning text-white w-100 py-2" id="previewPdfBtn">
+                                        <i class="fas fa-file-pdf me-2"></i>Preview PDF
+                                    </button>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <button type="button" class="btn btn-reset text-white w-100 py-2" id="resetBtn">
+                                        <i class="fas fa-redo me-2"></i>Reset Form
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Preview Modal -->
+    <div class="modal fade" id="invoicePreviewModal" tabindex="-1" aria-labelledby="invoicePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="invoicePreviewModalLabel">Invoice Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="invoicePreview" class="invoice-preview">
+                        <!-- Invoice content will be generated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="printPdfBtn">Print PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <script>
+        // API Configuration
+        const apiKey = 'AIzaSyBAuS3Brpsw5JOJnjNJii1UlFa7ClXf8d4';
+        const sheetId = '1YF1K8XNj2bqEkbO72z2dga5SodZ6C_dTnL8DC0mhAQU';
+        const purchaseSheetName = 'Purchase';
+        
+        // Global variables
+        let productData = [];
+        let productCounter = 0;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get user info from sessionStorage
+            const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
+            
+            // Set values from browser storage
+            document.getElementById('mainOffice').value = userInfo.mainOffice || '101';
+            document.getElementById('subOffice').value = userInfo.subOffice || '101';
+            document.getElementById('employeeId').value = userInfo.userID || 'EMP001';
+            
+            // Set current date and time
+            const now = new Date();
+            document.getElementById('date').value = formatDate(now);
+            document.getElementById('time').value = formatTime(now);
+            
+            // Generate initial invoice number
+            generateInvoiceNo();
+            
+            // Load product data from Google Sheets
+            loadProductData();
+            
+            // Event listeners
+            document.getElementById('generateInvoiceBtn').addEventListener('click', generateInvoiceNo);
+            document.getElementById('addProductBtn').addEventListener('click', addProductRow);
+            document.getElementById('previewPdfBtn').addEventListener('click', previewPdf);
+            document.getElementById('printPdfBtn').addEventListener('click', printPdf);
+            document.getElementById('resetBtn').addEventListener('click', resetForm);
+            document.getElementById('salesForm').addEventListener('submit', submitForm);
+        });
+
+        // Format date as dd/mm/yyyy
+        function formatDate(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Format time as HH:MM:SS
+        function formatTime(date) {
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Generate invoice number
+        function generateInvoiceNo() {
+            const now = new Date();
+            const year = String(now.getFullYear()).slice(-2);
+            const mainOffice = document.getElementById('mainOffice').value;
+            const subOffice = document.getElementById('subOffice').value;
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hour = String(now.getHours()).padStart(2, '0');
+            const minute = String(now.getMinutes()).padStart(2, '0');
+            const second = String(now.getSeconds()).padStart(2, '0');
+            
+            const invoiceNo = `${year}${mainOffice}${subOffice}${month}${day}${hour}${minute}${second}`;
+            document.getElementById('invoiceNo').value = invoiceNo;
+            return invoiceNo;
+        }
+
+        // Load product data from Google Sheets
+        function loadProductData() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${purchaseSheetName}!A2:Q?key=${apiKey}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.values) {
+                        productData = data.values.map(row => ({
+                            mainOffice: row[0],
+                            subOffice: row[1],
+                            date: row[2],
+                            employeeId: row[3],
+                            productId: row[4],
+                            category: row[5],
+                            productName: row[6],
+                            item: row[7],
+                            unitPrice: row[8],
+                            quantity: row[9],
+                            taxGst: row[10],
+                            taxCgst: row[11],
+                            otherCharge: row[12],
+                            margin: row[13],
+                            unitMrp: row[14],
+                            paymentMode: row[15],
+                            confirm: row[16]
+                        }));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading product data:', error);
+                });
+        }
+
+        // Add product row to table
+        function addProductRow() {
+            productCounter++;
+            const tableBody = document.getElementById('productsTableBody');
+            const newRow = document.createElement('tr');
+            newRow.id = `productRow-${productCounter}`;
+            
+            newRow.innerHTML = `
+                <td>
+                    <input type="text" class="form-control product-id" list="productIds" required>
+                    <datalist id="productIds">
+                        ${productData.map(product => `<option value="${product.productId}">${product.productId}</option>`).join('')}
+                    </datalist>
+                </td>
+                <td><input type="text" class="form-control category" readonly></td>
+                <td><input type="text" class="form-control product" readonly></td>
+                <td><input type="text" class="form-control item-name" readonly></td>
+                <td><input type="number" class="form-control unit-price" min="0" step="0.01" readonly></td>
+                <td><input type="number" class="form-control quantity" min="1" value="1" required></td>
+                <td><input type="number" class="form-control tax-gst" min="0" step="0.01" value="0"></td>
+                <td><input type="number" class="form-control tax-cgst" min="0" step="0.01" value="0"></td>
+                <td><input type="number" class="form-control other-charge" min="0" step="0.01" value="0"></td>
+                <td><input type="number" class="form-control amount" readonly></td>
+                <td>
+                    <select class="form-select payment-mode">
+                        <option value="Cash">Cash</option>
+                        <option value="Credit">Credit</option>
+                        <option value="Online">Online</option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm remove-product">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            tableBody.appendChild(newRow);
+            
+            // Add event listeners to the new row
+            const productIdInput = newRow.querySelector('.product-id');
+            const quantityInput = newRow.querySelector('.quantity');
+            const taxGstInput = newRow.querySelector('.tax-gst');
+            const taxCgstInput = newRow.querySelector('.tax-cgst');
+            const otherChargeInput = newRow.querySelector('.other-charge');
+            const removeBtn = newRow.querySelector('.remove-product');
+            
+            productIdInput.addEventListener('change', function() {
+                populateProductDetails(this);
+            });
+            
+            quantityInput.addEventListener('input', function() {
+                calculateAmount(this);
+            });
+            
+            taxGstInput.addEventListener('input', function() {
+                calculateAmount(this);
+            });
+            
+            taxCgstInput.addEventListener('input', function() {
+                calculateAmount(this);
+            });
+            
+            otherChargeInput.addEventListener('input', function() {
+                calculateAmount(this);
+            });
+            
+            removeBtn.addEventListener('click', function() {
+                this.closest('tr').remove();
+                updateGrandTotal();
+            });
+        }
+
+        // Populate product details when Product ID is entered
+        function populateProductDetails(input) {
+            const productId = input.value;
+            const row = input.closest('tr');
+            const product = productData.find(p => p.productId === productId);
+            
+            if (product) {
+                row.querySelector('.category').value = product.category || '';
+                row.querySelector('.product').value = product.productName || '';
+                row.querySelector('.item-name').value = product.item || '';
+                row.querySelector('.unit-price').value = product.unitMrp || '0';
+                
+                // Calculate initial amount
+                calculateAmount(input);
+            }
+        }
+
+        // Calculate amount for a product row
+        function calculateAmount(input) {
+            const row = input.closest('tr');
+            const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
+            const quantity = parseInt(row.querySelector('.quantity').value) || 0;
+            const taxGst = parseFloat(row.querySelector('.tax-gst').value) || 0;
+            const taxCgst = parseFloat(row.querySelector('.tax-cgst').value) || 0;
+            const otherCharge = parseFloat(row.querySelector('.other-charge').value) || 0;
+            
+            const amount = (unitPrice * quantity) + taxGst + taxCgst + otherCharge;
+            row.querySelector('.amount').value = amount.toFixed(2);
+            
+            updateGrandTotal();
+        }
+
+        // Update grand total
+        function updateGrandTotal() {
+            const amountInputs = document.querySelectorAll('.amount');
+            let grandTotal = 0;
+            
+            amountInputs.forEach(input => {
+                grandTotal += parseFloat(input.value) || 0;
+            });
+            
+            document.getElementById('grandTotal').textContent = `₹ ${grandTotal.toFixed(2)}`;
+        }
+
+        // Preview PDF
+        function previewPdf() {
+            const invoicePreview = document.getElementById('invoicePreview');
+            const invoiceNo = document.getElementById('invoiceNo').value;
+            const mainOffice = document.getElementById('mainOffice').value;
+            const subOffice = document.getElementById('subOffice').value;
+            const customerId = document.getElementById('customerId').value;
+            const paymentMode = document.getElementById('paymentModeMain').value;
+            
+            let previewHTML = `
+                <div class="invoice-header">
+                    <h2>Sales Invoice: ${invoiceNo}</h2>
+                    <p>Shop: ${mainOffice}/${subOffice}</p>
+                    <p>Customer Mobile: ${customerId}</p>
+                    <p>Payment Mode: ${paymentMode}</p>
+                </div>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Category</th>
+                            <th>Product Name</th>
+                            <th>Item</th>
+                            <th>Unit Price (₹)</th>
+                            <th>Quantity</th>
+                            <th>Tax GST (₹)</th>
+                            <th>Tax CGST (₹)</th>
+                            <th>Other Charge (₹)</th>
+                            <th>Margin</th>
+                            <th>Unit MRP (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            const productRows = document.querySelectorAll('#productsTableBody tr');
+            let totalMrp = 0;
+            
+            productRows.forEach(row => {
+                const productId = row.querySelector('.product-id').value;
+                const product = productData.find(p => p.productId === productId);
+                
+                if (product) {
+                    previewHTML += `
+                        <tr>
+                            <td>${product.productId}</td>
+                            <td>${product.category}</td>
+                            <td>${product.productName}</td>
+                            <td>${product.item}</td>
+                            <td>${product.unitPrice}</td>
+                            <td>${row.querySelector('.quantity').value}</td>
+                            <td>${row.querySelector('.tax-gst').value}</td>
+                            <td>${row.querySelector('.tax-cgst').value}</td>
+                            <td>${row.querySelector('.other-charge').value}</td>
+                            <td>${product.margin}</td>
+                            <td>${product.unitMrp}</td>
+                        </tr>
+                    `;
+                    
+                    totalMrp += parseFloat(product.unitMrp) * parseInt(row.querySelector('.quantity').value);
+                }
+            });
+            
+            previewHTML += `
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="10" class="text-end"><strong>Grand Total:</strong></td>
+                            <td><strong>₹ ${totalMrp.toFixed(2)}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            `;
+            
+            invoicePreview.innerHTML = previewHTML;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('invoicePreviewModal'));
+            modal.show();
+        }
+
+        // Print PDF
+        function printPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const invoicePreview = document.getElementById('invoicePreview');
+            
+            html2canvas(invoicePreview).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = doc.internal.pageSize.getWidth();
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                doc.save(`invoice_${document.getElementById('invoiceNo').value}.pdf`);
+            });
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('salesForm').reset();
+            document.getElementById('productsTableBody').innerHTML = '';
+            document.getElementById('grandTotal').textContent = '₹ 0.00';
+            generateInvoiceNo();
+            
+            // Reset hidden fields
+            const now = new Date();
+            document.getElementById('date').value = formatDate(now);
+            document.getElementById('time').value = formatTime(now);
+        }
+
+        // Submit form
+        function submitForm(event) {
+            event.preventDefault();
+            
+            const submitButton = document.getElementById("saveBtn");
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            
+            // Generate invoice number if not already set
+            const invoiceNo = document.getElementById('invoiceNo').value || generateInvoiceNo();
+            
+            // Prepare form data
+            const formDataArray = [];
+            const productRows = document.querySelectorAll('#productsTableBody tr');
+            
+            productRows.forEach(row => {
+                const productId = row.querySelector('.product-id').value;
+                const product = productData.find(p => p.productId === productId);
+                
+                if (product) {
+                    const formData = {
+                        mainOffice: "'"+document.getElementById('mainOffice').value,
+                        subOffice: "'"+document.getElementById('subOffice').value,
+                        date: "'"+document.getElementById('date').value,
+                        employeeId: "'"+document.getElementById('employeeId').value,
+                        time: "'"+document.getElementById('time').value,
+                        customerId: "'"+document.getElementById('customerId').value,
+                        invoiceNo: "'"+invoiceNo,
+                        productId: "'"+productId,
+                        category: product.category,
+                        product: product.productName,
+                        itemName: product.item,
+                        unitPrice: "'"+product.unitPrice,
+                        quantity: "'"+row.querySelector('.quantity').value,
+                        taxGst: "'"+row.querySelector('.tax-gst').value,
+                        taxCgst: "'"+row.querySelector('.tax-cgst').value,
+                        otherCharge: "'"+row.querySelector('.other-charge').value,
+                        unitMrp: "'"+product.unitMrp,
+                        paymentMode: row.querySelector('.payment-mode').value,
+                        confirm: "No"
+                    };
+                    
+                    formDataArray.push(formData);
+                }
+            });
+            
+            // Submit each product row
+            const submitPromises = formDataArray.map(formData => {
+                const urlEncodedData = new URLSearchParams(formData).toString();
+                
+                return fetch('https://script.google.com/macros/s/AKfycbzvRXmX6rvngL8AXqhdY5IesjlmVjP-dHiArNBSK--Gd0joh-XGYMPflBH3ZuwamIPeMA/exec', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: urlEncodedData
+                });
+            });
+            
+            // Wait for all submissions to complete
+            Promise.all(submitPromises)
+                .then(responses => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Invoice';
+                    
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Sales invoice saved successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+					
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Invoice';
+                    
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'There was an issue saving the invoice. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
