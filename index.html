@@ -483,6 +483,9 @@
         const loginSheetName = 'login';
         const menuSheetName = 'Menu';
         
+        // Global variable to track if menu is already initialized
+        let menuInitialized = false;
+        
         // CAPTCHA functionality
         function generateCaptcha() {
             const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -546,12 +549,14 @@
         // Logout function
         function logout() {
             sessionStorage.clear();
+            menuInitialized = false; // Reset menu initialization flag
             $('#main-wrapper').hide();
             $('#login-overlay').show();
             $('#login-form')[0].reset();
             displayCaptcha();
-            // Clear dynamic content area on logout
+            // Clear dynamic content area and menu on logout
             $('#dynamic-content').empty();
+            $('#sidebar-menu').empty();
         }
         
         // Function to load dynamic content
@@ -623,142 +628,37 @@
             });
         }
         
-        // Login functionality
-        $(document).ready(function() {
-            // Initialize CAPTCHA
-            displayCaptcha();
+        // Function to show main application
+        function showMainApp(userInfo) {
+            // Update user info in sidebar
+            $('#sidebar-username').text(userInfo.userName);
+            $('#sidebar-userid').text(`(${userInfo.userID})`);
+            $('#sidebar-designation').text(userInfo.designation);
+            $('#sidebar-office').text(`${userInfo.subOffice} - ${userInfo.mainOffice}`);
             
-            // Make sure loading spinner is hidden initially
-            $('#loading-spinner').addClass('hidden');
+            // Update user display in navbar
+            $('#session-storage-value').text(userInfo.userName);
+            $('#user-name-display').text(userInfo.userName);
+            $('#user-role-display').text(userInfo.designation);
             
-            // Refresh CAPTCHA button
-            $('#refresh-captcha').click(function() {
-                displayCaptcha();
-            });
+            // Show the main content wrapper and hide login
+            $('#main-wrapper').show();
+            $('#login-overlay').hide();
             
-            // CAPTCHA input event - auto convert to uppercase
-            $('#captcha-input').on('input', function() {
-                $(this).val($(this).val().toUpperCase());
-            });
+            // Start updating date and time
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
             
-            // Check if user is already logged in
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
-                showMainApp(userInfo);
-            }
-            
-            // Handle login form submission
-            $('#login-form').submit(function(e) {
-                e.preventDefault();
+            // Initialize the main application with menu
+            initializeMenu(userInfo.designation);
+        }
+        
+        // Function to initialize the menu after successful login
+        function initializeMenu(userDesignation) {
+            // Clear existing menu only if not already initialized
+            if (!menuInitialized) {
+                $('#sidebar-menu').empty();
                 
-                // Validate CAPTCHA first
-                if (!validateCaptcha()) {
-                    return;
-                }
-                
-                // Get button and disable it
-                const loginButton = $('#login-button');
-                loginButton.prop('disabled', true);
-                loginButton.addClass('loading');
-                
-                const userId = $('#userid').val().trim();
-                const password = $('#password').val().trim();
-                
-                // Show loading state
-                $('#login-error').hide();
-                
-                // Fetch credentials
-                const loginUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${loginSheetName}!A2:J?key=${apiKey}`;
-                
-                fetch(loginUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        const userData = data.values;
-                        let loginSuccessful = false;
-                        let userInfo = {};
-                        
-                        // Check each row for matching credentials
-                        for (let i = 0; i < userData.length; i++) {
-                            const row = userData[i];
-                            // Check if user ID and password match, and Confirm column is "Yes"
-                            if (row[5] === userId && row[6] === password && row[9] === 'Yes') {
-                                loginSuccessful = true;
-                                userInfo = {
-                                    mainOffice: row[0],
-                                    subOffice: row[1],
-                                    date: row[2],
-                                    otp: row[3],
-                                    userName: row[4],
-                                    userID: row[5],
-                                    password: row[6],
-                                    email: row[7],
-                                    designation: row[8],
-                                    confirm: row[9]
-                                };
-                                break;
-                            }
-                        }
-                        
-                        if (loginSuccessful) {
-                            // Successful login
-                            $('#login-error').hide();
-                            $('#login-overlay').hide();
-                            
-                            // Store user information in session storage
-                            sessionStorage.setItem('isLoggedIn', 'true');
-                            sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
-                            
-                            // Show the main application
-                            showMainApp(userInfo);
-                        } else {
-                            // Failed login
-                            $('#login-error').text('Invalid User ID or Password').show();
-                            displayCaptcha();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        $('#login-error').text('Error connecting to server. Please try again later.').show();
-                        displayCaptcha();
-                    })
-                    .finally(() => {
-                        // Re-enable button
-                        loginButton.prop('disabled', false);
-                        loginButton.removeClass('loading');
-                    });
-            });
-            
-            // Function to show main application
-            function showMainApp(userInfo) {
-                // Update user info in sidebar
-                $('#sidebar-username').text(userInfo.userName);
-                $('#sidebar-userid').text(`(${userInfo.userID})`);
-                $('#sidebar-designation').text(userInfo.designation);
-                $('#sidebar-office').text(`${userInfo.subOffice} - ${userInfo.mainOffice}`);
-                
-                // Update user display in navbar
-                $('#session-storage-value').text(userInfo.userName);
-                $('#user-name-display').text(userInfo.userName);
-                $('#user-role-display').text(userInfo.designation);
-                
-                // Show the main content wrapper
-                $('#main-wrapper').show();
-                
-                // Start updating date and time
-                updateDateTime();
-                setInterval(updateDateTime, 1000);
-                
-                // Initialize the main application with menu
-                initializeMenu(userInfo.designation);
-            }
-            
-            // Function to initialize the menu after successful login
-            function initializeMenu(userDesignation) {
                 // Fetch menu data
                 const menuUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${menuSheetName}!A2:F?key=${apiKey}`;
                 
@@ -830,6 +730,9 @@
                         // Initialize custom treeview functionality
                         initializeTreeview();
                         
+                        // Mark menu as initialized
+                        menuInitialized = true;
+                        
                         // Load the first URL automatically only if it exists
                         if (firstUrl) {
                             loadDynamicContent(firstUrl);
@@ -845,6 +748,120 @@
                         $('#loading-spinner').addClass('hidden');
                     });
             }
+        }
+        
+        // Login functionality
+        $(document).ready(function() {
+            // Initialize CAPTCHA
+            displayCaptcha();
+            
+            // Make sure loading spinner is hidden initially
+            $('#loading-spinner').addClass('hidden');
+            
+            // Refresh CAPTCHA button
+            $('#refresh-captcha').click(function() {
+                displayCaptcha();
+            });
+            
+            // CAPTCHA input event - auto convert to uppercase
+            $('#captcha-input').on('input', function() {
+                $(this).val($(this).val().toUpperCase());
+            });
+            
+            // Check if user is already logged in
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+                showMainApp(userInfo);
+            } else {
+                // Ensure login overlay is visible if not logged in
+                $('#login-overlay').show();
+                $('#main-wrapper').hide();
+            }
+            
+            // Handle login form submission
+            $('#login-form').submit(function(e) {
+                e.preventDefault();
+                
+                // Validate CAPTCHA first
+                if (!validateCaptcha()) {
+                    return;
+                }
+                
+                // Get button and disable it
+                const loginButton = $('#login-button');
+                loginButton.prop('disabled', true);
+                loginButton.addClass('loading');
+                
+                const userId = $('#userid').val().trim();
+                const password = $('#password').val().trim();
+                
+                // Show loading state
+                $('#login-error').hide();
+                
+                // Fetch credentials
+                const loginUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${loginSheetName}!A2:J?key=${apiKey}`;
+                
+                fetch(loginUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const userData = data.values;
+                        let loginSuccessful = false;
+                        let userInfo = {};
+                        
+                        // Check each row for matching credentials
+                        for (let i = 0; i < userData.length; i++) {
+                            const row = userData[i];
+                            // Check if user ID and password match, and Confirm column is "Yes"
+                            if (row[5] === userId && row[6] === password && row[9] === 'Yes') {
+                                loginSuccessful = true;
+                                userInfo = {
+                                    mainOffice: row[0],
+                                    subOffice: row[1],
+                                    date: row[2],
+                                    otp: row[3],
+                                    userName: row[4],
+                                    userID: row[5],
+                                    password: row[6],
+                                    email: row[7],
+                                    designation: row[8],
+                                    confirm: row[9]
+                                };
+                                break;
+                            }
+                        }
+                        
+                        if (loginSuccessful) {
+                            // Successful login
+                            $('#login-error').hide();
+                            
+                            // Store user information in session storage
+                            sessionStorage.setItem('isLoggedIn', 'true');
+                            sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
+                            
+                            // Show the main application
+                            showMainApp(userInfo);
+                        } else {
+                            // Failed login
+                            $('#login-error').text('Invalid User ID or Password').show();
+                            displayCaptcha();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        $('#login-error').text('Error connecting to server. Please try again later.').show();
+                        displayCaptcha();
+                    })
+                    .finally(() => {
+                        // Re-enable button
+                        loginButton.prop('disabled', false);
+                        loginButton.removeClass('loading');
+                    });
+            });
         });
     </script>
 </body>
