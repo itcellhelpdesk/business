@@ -99,33 +99,33 @@
                                 </div>
                             </div>
 
-                         <!-- Product Information Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <h5 class="section-title">Product Information</h5>
-    </div>
-    <div class="col-md-6 mb-3">
-        <label for="category" class="form-label required">Category</label>
-        <select class="form-select" id="category" name="category" required>
-            <option value="" selected disabled>Select Category</option>
-        </select>
-    </div>
-    <div class="col-md-6 mb-3">
-        <label for="product" class="form-label required">Product Name</label>
-        <select class="form-select" id="product" name="product" required>
-            <option value="" selected disabled>Select Product</option>
-        </select>
-    </div>
-    <div class="col-md-6 mb-3">
-        <label for="item" class="form-label required">Item</label>
-        <input type="text" class="form-control" id="item" name="item" placeholder="Enter Item Name" >
-        <small class="text-muted">Item number will be auto-generated</small>
-    </div>
-    <div class="col-md-6 mb-3">
-        <label for="productId" class="form-label required">Product ID</label>
-        <input type="text" class="form-control" id="productId" name="productId" readonly>
-    </div>
-</div>
+                            <!-- Product Information Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="section-title">Product Information</h5>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label required">Category</label>
+                                    <select class="form-select" id="category" name="category" required>
+                                        <option value="" selected disabled>Select Category</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="product" class="form-label required">Product Name</label>
+                                    <select class="form-select" id="product" name="product" required>
+                                        <option value="" selected disabled>Select Product</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="item" class="form-label required">Item</label>
+                                    <input type="text" class="form-control" id="item" name="item" placeholder="Enter Item Name" >
+                                    <small class="text-muted">Item number will be auto-generated</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="productId" class="form-label required">Product ID</label>
+                                    <input type="text" class="form-control" id="productId" name="productId" readonly>
+                                </div>
+                            </div>
 
                             <!-- Pricing Information Section -->
                             <div class="row mb-4">
@@ -149,23 +149,23 @@
                             </div>
 
                             <!-- Tax & Charges Section -->
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <h5 class="section-title">Tax & Charges</h5>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="taxGst" class="form-label">Tax GST (%)</label>
-                                    <input type="number" class="form-control" id="taxGst" name="taxGst" min="0" step="1" value="0">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="taxCgst" class="form-label">Tax CGST (%)</label>
-                                    <input type="number" class="form-control" id="taxCgst" name="taxCgst" min="0" step="1" value="0">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="otherCharge" class="form-label">Other Charge (₹)</label>
-                                    <input type="number" class="form-control" id="otherCharge" name="otherCharge" min="0" step="1" value="0">
-                                </div>
-                            </div>
+<div class="row mb-4">
+    <div class="col-12">
+        <h5 class="section-title">Tax & Charges</h5>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label for="taxGst" class="form-label">Tax GST Amount (₹)</label>
+        <input type="number" class="form-control" id="taxGst" name="taxGst" min="0" step="0.01" value="0">
+    </div>
+    <div class="col-md-4 mb-3">
+        <label for="taxCgst" class="form-label">Tax CGST Amount (₹)</label>
+        <input type="number" class="form-control" id="taxCgst" name="taxCgst" min="0" step="0.01" value="0">
+    </div>
+    <div class="col-md-4 mb-3">
+        <label for="otherCharge" class="form-label">Other Charge (₹)</label>
+        <input type="number" class="form-control" id="otherCharge" name="otherCharge" min="0" step="0.01" value="0">
+    </div>
+</div>
 
                             <!-- Cost Calculation Section -->
                             <div class="calculation-section mb-4">
@@ -230,26 +230,25 @@
             const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
             
             // Set values from browser storage
-            document.getElementById('mainOffice').value = userInfo.mainOffice || '101';
-            document.getElementById('subOffice').value = userInfo.subOffice || '101';
-            document.getElementById('employeeId').value = userInfo.userID || 'EMP001';
+            document.getElementById('mainOffice').value = userInfo.mainOffice || '1';
+            document.getElementById('subOffice').value = userInfo.subOffice || '1';
+            document.getElementById('employeeId').value = userInfo.userID || '';
             
             // Load categories and products
             loadCategories();
             loadPaymentModes();
             
-            // Add event listeners for calculations
             document.getElementById('unitPrice').addEventListener('input', calculateCosts);
             document.getElementById('quantity').addEventListener('input', calculateCosts);
-            document.getElementById('taxGst').addEventListener('input', calculateCosts);
-            document.getElementById('taxCgst').addEventListener('input', calculateCosts);
+            document.getElementById('taxGst').addEventListener('input', calculateCosts); // Now amount
+            document.getElementById('taxCgst').addEventListener('input', calculateCosts); // Now amount
             document.getElementById('otherCharge').addEventListener('input', calculateCosts);
-            document.getElementById('marginPercentage').addEventListener('input', calculateMarginAmount);
+             document.getElementById('marginPercentage').addEventListener('input', calculateMarginAmount);
             document.getElementById('marginAmount').addEventListener('input', calculateMarginPercentage);
             
             // Add event listeners for category and product selection
-           document.getElementById('category').addEventListener('change', updateProductAndItem);
-document.getElementById('product').addEventListener('change', updateProductAndItem);
+            document.getElementById('category').addEventListener('change', updateProductAndItem);
+            document.getElementById('product').addEventListener('change', updateProductAndItem);
             
             // Add focus event for item field
             document.getElementById('item').addEventListener('focus', setItemNumber);
@@ -259,6 +258,7 @@ document.getElementById('product').addEventListener('change', updateProductAndIt
                 document.getElementById('stockEntryForm').reset();
                 document.getElementById('costPerUnitDisplay').textContent = '₹ 0.00';
                 document.getElementById('unitMrp').value = '';
+                document.getElementById('item').value = '';
                 loadCategories();
                 loadPaymentModes();
             });
@@ -282,20 +282,20 @@ document.getElementById('product').addEventListener('change', updateProductAndIt
                 date: "'"+document.getElementById('date').value,
                 employeeId: "'"+document.getElementById('employeeId').value,
                 category: document.getElementById('category').value,
-                product: document.getElementById('product').value, // Product name
+                product: document.getElementById('product').value,
                 productId: "'"+document.getElementById('productId').value,
                 item: document.getElementById('item').value,
                 unitPrice: "'"+document.getElementById('unitPrice').value,
                 quantity: "'"+document.getElementById('quantity').value,
                 paymentMode: document.getElementById('paymentMode').value,
-                taxGst: "'"+document.getElementById('taxGst').value,
-                taxCgst: "'"+document.getElementById('taxCgst').value,
+                taxGst: "'"+document.getElementById('taxGst').value, // Now amount instead of percentage
+                taxCgst: "'"+document.getElementById('taxCgst').value, // Now amount instead of percentage
                 otherCharge: "'"+document.getElementById('otherCharge').value,
-                marginPercentage: "'"+document.getElementById('marginPercentage').value, // Margin %
+                 marginPercentage: "'"+document.getElementById('marginPercentage').value,
                 marginAmount: "'"+document.getElementById('marginAmount').value,
                 unitMrp: "'"+document.getElementById('unitMrp').value,
                 costPerUnit: "'"+document.getElementById('costPerUnitDisplay').textContent.replace('₹ ', ''),
-				confirmStatus: "No"
+                confirmStatus: "No"
             };
             
             console.log('Form Data to be submitted:', formData); // Debug log
@@ -329,9 +329,9 @@ document.getElementById('product').addEventListener('change', updateProductAndIt
                     
                     // Reset user info after form reset
                     const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
-                    document.getElementById('mainOffice').value = userInfo.mainOffice || '101';
-                    document.getElementById('subOffice').value = userInfo.subOffice || '101';
-                    document.getElementById('employeeId').value = userInfo.userID || 'EMP001';
+                    document.getElementById('mainOffice').value = userInfo.mainOffice || '1';
+                    document.getElementById('subOffice').value = userInfo.subOffice || '1';
+                    document.getElementById('employeeId').value = userInfo.userID || '';
                     
                     loadCategories();
                     loadPaymentModes();
@@ -394,9 +394,9 @@ document.getElementById('product').addEventListener('change', updateProductAndIt
                     const categorySelect = document.getElementById('category');
                     categorySelect.innerHTML = `
                         <option value="" selected disabled>Select Category</option>
-                        <option value="1-Paints">1-Paints</option>
-                        <option value="2-Brushes">2-Brushes</option>
-                        <option value="3-Tools">3-Tools</option>
+                        <option value="1-">1-</option>
+                        <option value="2-">2-</option>
+                        <option value="3-">3-</option>
                     `;
                 });
         }
@@ -443,9 +443,9 @@ document.getElementById('product').addEventListener('change', updateProductAndIt
                     const productSelect = document.getElementById('product');
                     productSelect.innerHTML = `
                         <option value="" selected disabled>Select Product</option>
-                        <option value="1-Red Paint">1-Red Paint</option>
-                        <option value="2-Blue Paint">2-Blue Paint</option>
-                        <option value="3-Green Paint">3-Green Paint</option>
+                        <option value="1-">1-</option>
+                        <option value="2-">2-</option>
+                        <option value="3-">3-</option>
                     `;
                 });
         });
@@ -497,26 +497,24 @@ document.getElementById('product').addEventListener('change', updateProductAndIt
         }
 
         // Calculate cost per unit
-        function calculateCosts() {
-            const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
-            const quantity = parseInt(document.getElementById('quantity').value) || 1;
-            const taxGst = parseFloat(document.getElementById('taxGst').value) || 0;
-            const taxCgst = parseFloat(document.getElementById('taxCgst').value) || 0;
-            const otherCharge = parseFloat(document.getElementById('otherCharge').value) || 0;
-            
-            // Calculate tax amount
-            const taxAmount = (unitPrice * (taxGst + taxCgst) / 100);
-            
-            // Calculate cost per unit
-            const costPerUnit = unitPrice + (taxAmount / quantity) + (otherCharge / quantity);
-            
-            // Display cost per unit
-            document.getElementById('costPerUnitDisplay').textContent = `₹ ${costPerUnit.toFixed(2)}`;
-            
-            // Update MRP if margin is already set
-            calculateMRP();
-        }
-
+      // Calculate cost per unit
+function calculateCosts() {
+    const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+    const quantity = parseInt(document.getElementById('quantity').value) || 1;
+    const taxGst = parseFloat(document.getElementById('taxGst').value) || 0; // Now amount
+    const taxCgst = parseFloat(document.getElementById('taxCgst').value) || 0; // Now amount
+    const otherCharge = parseFloat(document.getElementById('otherCharge').value) || 0;
+    
+    // No need to calculate tax amount since it's now entered as amount directly
+    // Calculate cost per unit
+    const costPerUnit = unitPrice + ((taxGst + taxCgst + otherCharge) / quantity);
+    
+    // Display cost per unit
+    document.getElementById('costPerUnitDisplay').textContent = `₹ ${costPerUnit.toFixed(2)}`;
+    
+    // Update MRP if margin is already set
+    calculateMRP();
+}
         // Calculate margin amount from percentage
         function calculateMarginAmount() {
             const costPerUnitText = document.getElementById('costPerUnitDisplay').textContent;
@@ -562,7 +560,7 @@ document.getElementById('product').addEventListener('change', updateProductAndIt
             document.getElementById('unitMrp').value = unitMrp.toFixed(2);
         }
 
-        // Update Product ID and Item when category and product are selected
+ // Update Product ID and Item when category and product are selected
 function updateProductAndItem() {
     const category = document.getElementById('category').value;
     const product = document.getElementById('product').value;
@@ -570,56 +568,106 @@ function updateProductAndItem() {
     const subOffice = document.getElementById('subOffice').value;
     
     if (category && product) {
-        // Generate Product ID first
-        const categoryNum = category.split('-')[0] || '1';
-        const productNum = product.split('-')[0] || '1';
-        const productId = `${mainOffice}${subOffice}${categoryNum}${productNum}`;
-        document.getElementById('productId').value = productId;
-        
-        // Then generate Item ID by checking existing entries
+        // First generate Item ID by checking existing entries
         generateItemId(category, product);
+        
+        // Then update Product ID with the generated item number
+        updateProductId();
     }
 }
-// Generate Item ID by checking existing entries in the sheet
+
+// Update Product ID after item is generated
+function updateProductId() {
+    const category = document.getElementById('category').value;
+    const product = document.getElementById('product').value;
+    const mainOffice = document.getElementById('mainOffice').value;
+    const subOffice = document.getElementById('subOffice').value;
+    const item = document.getElementById('item').value;
+    
+    if (category && product && item) {
+        // Extract numbers from category, product, and item
+        const categoryNum = category.split('-')[0] || '1';
+        const productNum = product.split('-')[0] || '1';
+        
+        // Extract item number from the generated item field
+        const itemMatch = item.match(/^(\d+)-/);
+        const itemNum = itemMatch ? itemMatch[1] : '001';
+        
+        // Generate Product ID with item number
+        const productId = `${mainOffice}${subOffice}${categoryNum}${productNum}${itemNum}`;
+        document.getElementById('productId').value = productId;
+    }
+}
+
 // Generate Item ID by counting matching category and product combinations
 function generateItemId(category, product) {
-    const sheetId = '1JF2aKuDLGm3jE9Dq3OAEw5S9T99f9w-wZkP0Gc6JDlQ';
-    const sheetName = 'Stock Entry';
+    const sheetId = '1YF1K8XNj2bqEkbO72z2dga5SodZ6C_dTnL8DC0mhAQU';
+    const sheetName = 'Purchase';
     
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}!F2:G?key=${apiKey}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}!F:G?key=${apiKey}`;
     
     fetch(url)
         .then(response => response.json())
         .then(data => {
-            let itemNumber = 1; // Default to 1 if no matches found
+            console.log('Raw data from sheet:', data); // Debug log
             
-            if (data.values) {
-                // Count entries with matching category and product
-                const matchingCount = data.values.filter(row => 
-                    row[0] === category && row[1] === product
-                ).length;
+            let itemNumber = 1; // Default to 1
+            
+            if (data.values && data.values.length > 0) {
+                // Skip header row (index 0) and count matches
+                let matchingCount = 0;
+                
+                for (let i = 1; i < data.values.length; i++) {
+                    const row = data.values[i];
+                    if (row && row.length >= 2) {
+                        const rowCategory = row[0];
+                        const rowProduct = row[1];
+                        
+                        console.log(`Row ${i}: Category="${rowCategory}", Product="${rowProduct}"`); // Debug log
+                        
+                        if (rowCategory === category && rowProduct === product) {
+                            matchingCount++;
+                            console.log(`Match found! Total matches: ${matchingCount}`); // Debug log
+                        }
+                    }
+                }
                 
                 itemNumber = matchingCount + 1;
+                console.log(`Final item number: ${itemNumber}`); // Debug log
             }
             
+            // Extract just the product name without the number prefix
+            const productNameOnly = product.includes('-') ? product.split('-').slice(1).join('-') : product;
+            
             // Set the item field with the generated number
-            document.getElementById('item').value = `${itemNumber}-${product}`;
+            const finalItemValue = `${itemNumber}-${productNameOnly}`;
+            document.getElementById('item').value = finalItemValue;
+            console.log(`Final item value: ${finalItemValue}`); // Debug log
+            
+            // Now update the Product ID with the generated item number
+            updateProductId();
+            
         })
         .catch(error => {
             console.error('Error loading existing entries:', error);
             // Fallback: set default item number
-            document.getElementById('item').value = `1-${product}`;
+            const productNameOnly = product.includes('-') ? product.split('-').slice(1).join('-') : product;
+            document.getElementById('item').value = `1-${productNameOnly}`;
+            
+            // Still update Product ID with fallback item number
+            updateProductId();
         });
 }
-       // Set item number when item field is focused (keep as backup)
-function setItemNumber() {
-    const product = document.getElementById('product').value;
-    const category = document.getElementById('category').value;
-    
-    if (product && category && !document.getElementById('item').value) {
-        generateItemId(category);
-    }
-}
+
+        // Set item number when item field is focused (keep as backup)
+        function setItemNumber() {
+            const product = document.getElementById('product').value;
+            const category = document.getElementById('category').value;
+            
+            if (product && category && !document.getElementById('item').value) {
+                generateItemId(category, product);
+            }
+        }
     </script>
 </body>
 </html>
