@@ -244,427 +244,555 @@
     <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
-    <script>
-        // API Configuration
-        const apiKey = 'AIzaSyBAuS3Brpsw5JOJnjNJii1UlFa7ClXf8d4';
-        const sheetId = '1YF1K8XNj2bqEkbO72z2dga5SodZ6C_dTnL8DC0mhAQU';
-        const purchaseSheetName = 'Purchase';
+<script>
+    // API Configuration
+    const apiKey = 'AIzaSyBAuS3Brpsw5JOJnjNJii1UlFa7ClXf8d4';
+    const sheetId = '1YF1K8XNj2bqEkbO72z2dga5SodZ6C_dTnL8DC0mhAQU';
+    const purchaseSheetName = 'Purchase';
+    
+    // Global variables
+    let purchaseData = [];
+    let salesData = [];
+    let productCounter = 0;
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get user info from sessionStorage
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
         
-        // Global variables
-        let productData = [];
-        let productCounter = 0;
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get user info from sessionStorage
-            const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || '{}');
-            
-            // Set values from browser storage
-            document.getElementById('mainOffice').value = userInfo.mainOffice || '101';
-            document.getElementById('subOffice').value = userInfo.subOffice || '101';
-            document.getElementById('employeeId').value = userInfo.userID || 'EMP001';
-            
-            // Set current date and time
-            const now = new Date();
-            document.getElementById('date').value = formatDate(now);
-            document.getElementById('time').value = formatTime(now);
-            
-            // Generate initial invoice number
-            generateInvoiceNo();
-            
-            // Load product data from Google Sheets
-            loadProductData();
-            
-            // Event listeners
-            document.getElementById('generateInvoiceBtn').addEventListener('click', generateInvoiceNo);
-            document.getElementById('addProductBtn').addEventListener('click', addProductRow);
-            document.getElementById('previewPdfBtn').addEventListener('click', previewPdf);
-            document.getElementById('printPdfBtn').addEventListener('click', printPdf);
-            document.getElementById('resetBtn').addEventListener('click', resetForm);
-            document.getElementById('salesForm').addEventListener('submit', submitForm);
-        });
-
-        // Format date as dd/mm/yyyy
-        function formatDate(date) {
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
-
-        // Format time as HH:MM:SS
-        function formatTime(date) {
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
-        }
-
-        // Generate invoice number
-        function generateInvoiceNo() {
-            const now = new Date();
-            const year = String(now.getFullYear()).slice(-2);
-            const mainOffice = document.getElementById('mainOffice').value;
-            const subOffice = document.getElementById('subOffice').value;
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hour = String(now.getHours()).padStart(2, '0');
-            const minute = String(now.getMinutes()).padStart(2, '0');
-            const second = String(now.getSeconds()).padStart(2, '0');
-            
-            const invoiceNo = `${year}${mainOffice}${subOffice}${month}${day}${hour}${minute}${second}`;
-            document.getElementById('invoiceNo').value = invoiceNo;
-            return invoiceNo;
-        }
-
+        // Set values from browser storage
+        document.getElementById('mainOffice').value = userInfo.mainOffice || '101';
+        document.getElementById('subOffice').value = userInfo.subOffice || '101';
+        document.getElementById('employeeId').value = userInfo.userID || 'EMP001';
+        
+        // Set current date and time
+        const now = new Date();
+        document.getElementById('date').value = formatDate(now);
+        document.getElementById('time').value = formatTime(now);
+        
+        // Generate initial invoice number
+        generateInvoiceNo();
+        
         // Load product data from Google Sheets
-        function loadProductData() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${purchaseSheetName}!A2:Q?key=${apiKey}`;
-            
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.values) {
-                        productData = data.values.map(row => ({
-                            mainOffice: row[0],
-                            subOffice: row[1],
-                            date: row[2],
-                            employeeId: row[3],
-                            productId: row[4],
-                            category: row[5],
-                            productName: row[6],
-                            item: row[7],
-                            unitPrice: row[8],
-                            quantity: row[9],
-                            taxGst: row[10],
-                            taxCgst: row[11],
-                            otherCharge: row[12],
-                            margin: row[13],
-                            unitMrp: row[14],
-                            paymentMode: row[15],
-                            confirm: row[16]
-                        }));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading product data:', error);
-                });
-        }
+        loadPurchaseData();
+        loadSalesData();
+        
+        // Event listeners
+        document.getElementById('generateInvoiceBtn').addEventListener('click', generateInvoiceNo);
+        document.getElementById('addProductBtn').addEventListener('click', addProductRow);
+        document.getElementById('previewPdfBtn').addEventListener('click', previewPdf);
+        document.getElementById('printPdfBtn').addEventListener('click', printPdf);
+        document.getElementById('resetBtn').addEventListener('click', resetForm);
+        document.getElementById('salesForm').addEventListener('submit', submitForm);
+    });
 
-        // Add product row to table
-        function addProductRow() {
-            productCounter++;
-            const tableBody = document.getElementById('productsTableBody');
-            const newRow = document.createElement('tr');
-            newRow.id = `productRow-${productCounter}`;
-            
-            newRow.innerHTML = `
-                <td>
-                    <input type="text" class="form-control product-id" list="productIds" required>
-                    <datalist id="productIds">
-                        ${productData.map(product => `<option value="${product.productId}">${product.productId}</option>`).join('')}
-                    </datalist>
-                </td>
-                <td><input type="text" class="form-control category" readonly></td>
-                <td><input type="text" class="form-control product" readonly></td>
-                <td><input type="text" class="form-control item-name" readonly></td>
-                <td><input type="number" class="form-control unit-price" min="0" step="0.01" readonly></td>
-                <td><input type="number" class="form-control quantity" min="1" value="1" required></td>
-                <td><input type="number" class="form-control tax-gst" min="0" step="0.01" value="0"></td>
-                <td><input type="number" class="form-control tax-cgst" min="0" step="0.01" value="0"></td>
-                <td><input type="number" class="form-control other-charge" min="0" step="0.01" value="0"></td>
-                <td><input type="number" class="form-control amount" readonly></td>
-                <td>
-                    <select class="form-select payment-mode">
-                        <option value="Cash">Cash</option>
-                        <option value="Credit">Credit</option>
-                        <option value="Online">Online</option>
-                    </select>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm remove-product">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            
-            tableBody.appendChild(newRow);
-            
-            // Add event listeners to the new row
-            const productIdInput = newRow.querySelector('.product-id');
-            const quantityInput = newRow.querySelector('.quantity');
-            const taxGstInput = newRow.querySelector('.tax-gst');
-            const taxCgstInput = newRow.querySelector('.tax-cgst');
-            const otherChargeInput = newRow.querySelector('.other-charge');
-            const removeBtn = newRow.querySelector('.remove-product');
-            
-            productIdInput.addEventListener('change', function() {
-                populateProductDetails(this);
-            });
-            
-            quantityInput.addEventListener('input', function() {
-                calculateAmount(this);
-            });
-            
-            taxGstInput.addEventListener('input', function() {
-                calculateAmount(this);
-            });
-            
-            taxCgstInput.addEventListener('input', function() {
-                calculateAmount(this);
-            });
-            
-            otherChargeInput.addEventListener('input', function() {
-                calculateAmount(this);
-            });
-            
-            removeBtn.addEventListener('click', function() {
-                this.closest('tr').remove();
-                updateGrandTotal();
-            });
-        }
+    // Format date as dd/mm/yyyy
+    function formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
 
-        // Populate product details when Product ID is entered
-        function populateProductDetails(input) {
-            const productId = input.value;
-            const row = input.closest('tr');
-            const product = productData.find(p => p.productId === productId);
+    // Format time as HH:MM:SS
+    function formatTime(date) {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    // Generate invoice number
+    function generateInvoiceNo() {
+        const now = new Date();
+        const year = String(now.getFullYear()).slice(-2);
+        const mainOffice = document.getElementById('mainOffice').value;
+        const subOffice = document.getElementById('subOffice').value;
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+        const second = String(now.getSeconds()).padStart(2, '0');
+        
+        const invoiceNo = `${year}${mainOffice}${subOffice}${month}${day}${hour}${minute}${second}`;
+        document.getElementById('invoiceNo').value = invoiceNo;
+        return invoiceNo;
+    }
+
+    // Load purchase data from Google Sheets
+    function loadPurchaseData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${purchaseSheetName}!A2:Q?key=${apiKey}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.values) {
+                    purchaseData = data.values.map(row => ({
+                        mainOffice: row[0],
+                        subOffice: row[1],
+                        date: row[2],
+                        employeeId: row[3],
+                        productId: row[4],
+                        category: row[5],
+                        productName: row[6],
+                        item: row[7],
+                        unitPrice: row[8],
+                        quantity: row[9],
+                        taxGst: row[10],
+                        taxCgst: row[11],
+                        otherCharge: row[12],
+                        margin: row[13],
+                        unitMrp: row[14],
+                        paymentMode: row[15],
+                        confirm: row[16]
+                    }));
+                }
+            })
+            .catch(error => {
+                console.error('Error loading purchase data:', error);
+            });
+    }
+
+    // Load sales data from Google Sheets
+    function loadSalesData() {
+        const salesSheetId = '1rEH-Q7kMI2k9qJ5oNmk9pRaEKTezLyId2i681H58RaI';
+        const salesSheetName = 'Sales';
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${salesSheetId}/values/${salesSheetName}!A2:S?key=${apiKey}`;
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.values) {
+                    salesData = data.values.map(row => ({
+                        mainOffice: row[0],
+                        subOffice: row[1],
+                        date: row[2],
+                        employeeId: row[3],
+                        time: row[4],
+                        customerId: row[5],
+                        invoiceNo: row[6],
+                        productId: row[7],
+                        category: row[8],
+                        product: row[9],
+                        itemName: row[10],
+                        unitPrice: row[11],
+                        quantity: row[12],
+                        taxGst: row[13],
+                        taxCgst: row[14],
+                        otherCharge: row[15],
+                        amount: row[16],
+                        paymentMode: row[17],
+                        confirm: row[18]
+                    }));
+                }
+            })
+            .catch(error => {
+                console.error('Error loading sales data:', error);
+            });
+    }
+
+    // Calculate available stock for a product
+    function getAvailableStock(productId) {
+        // Calculate total purchased quantity (confirmed purchases)
+        const totalPurchased = purchaseData
+            .filter(item => item.productId === productId && item.confirm === 'Yes')
+            .reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+        
+        // Calculate total sold quantity (confirmed sales)
+        const totalSold = salesData
+            .filter(item => item.productId === productId && item.confirm === 'Yes')
+            .reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
+        
+        // Available stock = total purchased - total sold
+        return totalPurchased - totalSold;
+    }
+
+    // Validate quantity input
+    function validateQuantity(input) {
+        const row = input.closest('tr');
+        const productId = row.querySelector('.product-id').value;
+        const quantity = parseInt(input.value) || 0;
+        
+        if (!productId) {
+            Swal.fire({
+                title: 'Warning!',
+                text: 'Please select a product first.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            input.value = '';
+            return false;
+        }
+        
+        const availableStock = getAvailableStock(productId);
+        
+        if (quantity > availableStock) {
+            Swal.fire({
+                title: 'Insufficient Stock!',
+                html: `Available stock for product ${productId} is <strong>${availableStock}</strong> units.<br>You cannot order more than available stock.`,
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            input.value = '';
+            return false;
+        }
+        
+        return true;
+    }
+
+    // Add product row to table
+    function addProductRow() {
+        productCounter++;
+        const tableBody = document.getElementById('productsTableBody');
+        const newRow = document.createElement('tr');
+        newRow.id = `productRow-${productCounter}`;
+        
+        newRow.innerHTML = `
+            <td>
+                <input type="text" class="form-control product-id" list="productIds" required>
+                <datalist id="productIds">
+                    ${purchaseData.map(product => `<option value="${product.productId}">${product.productId}</option>`).join('')}
+                </datalist>
+            </td>
+            <td><input type="text" class="form-control category" readonly></td>
+            <td><input type="text" class="form-control product" readonly></td>
+            <td><input type="text" class="form-control item-name" readonly></td>
+            <td><input type="number" class="form-control unit-price" min="0" step="0.01" readonly></td>
+            <td>
+                <input type="number" class="form-control quantity" min="1" value="1" required>
+                <small class="form-text text-muted stock-info" style="display: none;"></small>
+            </td>
+            <td><input type="number" class="form-control tax-gst" min="0" step="0.01" value="0"></td>
+            <td><input type="number" class="form-control tax-cgst" min="0" step="0.01" value="0"></td>
+            <td><input type="number" class="form-control other-charge" min="0" step="0.01" value="0"></td>
+            <td><input type="number" class="form-control amount" readonly></td>
+            <td>
+                <select class="form-select payment-mode">
+                    <option value="Cash">Cash</option>
+                    <option value="Credit">Credit</option>
+                    <option value="Online">Online</option>
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm remove-product">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tableBody.appendChild(newRow);
+        
+        // Add event listeners to the new row
+        const productIdInput = newRow.querySelector('.product-id');
+        const quantityInput = newRow.querySelector('.quantity');
+        const taxGstInput = newRow.querySelector('.tax-gst');
+        const taxCgstInput = newRow.querySelector('.tax-cgst');
+        const otherChargeInput = newRow.querySelector('.other-charge');
+        const removeBtn = newRow.querySelector('.remove-product');
+        const stockInfo = newRow.querySelector('.stock-info');
+        
+        productIdInput.addEventListener('change', function() {
+            populateProductDetails(this);
+            // Update stock info when product is selected
+            const productId = this.value;
+            if (productId) {
+                const availableStock = getAvailableStock(productId);
+                stockInfo.textContent = `Available: ${availableStock} units`;
+                stockInfo.style.display = 'block';
+                
+                // Set max attribute for quantity input
+                quantityInput.max = availableStock;
+            } else {
+                stockInfo.style.display = 'none';
+            }
+        });
+        
+        quantityInput.addEventListener('input', function() {
+            if (this.value) {
+                if (!validateQuantity(this)) {
+                    return;
+                }
+            }
+            calculateAmount(this);
+        });
+        
+        quantityInput.addEventListener('blur', function() {
+            if (this.value && !validateQuantity(this)) {
+                return;
+            }
+        });
+        
+        taxGstInput.addEventListener('input', function() {
+            calculateAmount(this);
+        });
+        
+        taxCgstInput.addEventListener('input', function() {
+            calculateAmount(this);
+        });
+        
+        otherChargeInput.addEventListener('input', function() {
+            calculateAmount(this);
+        });
+        
+        removeBtn.addEventListener('click', function() {
+            this.closest('tr').remove();
+            updateGrandTotal();
+        });
+    }
+
+    // Populate product details when Product ID is entered
+    function populateProductDetails(input) {
+        const productId = input.value;
+        const row = input.closest('tr');
+        const product = purchaseData.find(p => p.productId === productId);
+        const stockInfo = row.querySelector('.stock-info');
+        
+        if (product) {
+            row.querySelector('.category').value = product.category || '';
+            row.querySelector('.product').value = product.productName || '';
+            row.querySelector('.item-name').value = product.item || '';
+            row.querySelector('.unit-price').value = product.unitMrp || '0';
+            
+            // Show available stock
+            const availableStock = getAvailableStock(productId);
+            stockInfo.textContent = `Available: ${availableStock} units`;
+            stockInfo.style.display = 'block';
+            
+            // Set max attribute for quantity input
+            const quantityInput = row.querySelector('.quantity');
+            quantityInput.max = availableStock;
+            
+            // Calculate initial amount
+            calculateAmount(input);
+        } else {
+            stockInfo.style.display = 'none';
+        }
+    }
+
+    // Calculate amount for a product row
+    function calculateAmount(input) {
+        const row = input.closest('tr');
+        const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
+        const quantity = parseInt(row.querySelector('.quantity').value) || 0;
+        const taxGst = parseFloat(row.querySelector('.tax-gst').value) || 0;
+        const taxCgst = parseFloat(row.querySelector('.tax-cgst').value) || 0;
+        const otherCharge = parseFloat(row.querySelector('.other-charge').value) || 0;
+        
+        const amount = (unitPrice * quantity) + taxGst + taxCgst + otherCharge;
+        row.querySelector('.amount').value = amount.toFixed(2);
+        
+        updateGrandTotal();
+    }
+
+    // Update grand total
+    function updateGrandTotal() {
+        const amountInputs = document.querySelectorAll('.amount');
+        let grandTotal = 0;
+        
+        amountInputs.forEach(input => {
+            grandTotal += parseFloat(input.value) || 0;
+        });
+        
+        document.getElementById('grandTotal').textContent = `₹ ${grandTotal.toFixed(2)}`;
+    }
+
+    // Preview PDF
+    function previewPdf() {
+        const invoicePreview = document.getElementById('invoicePreview');
+        const invoiceNo = document.getElementById('invoiceNo').value;
+        const mainOffice = document.getElementById('mainOffice').value;
+        const subOffice = document.getElementById('subOffice').value;
+        const customerId = document.getElementById('customerId').value;
+        const paymentMode = document.getElementById('paymentModeMain').value;
+        
+        let previewHTML = `
+            <div class="invoice-header">
+                <h2>Sales Invoice: ${invoiceNo}</h2>
+                <p>Shop: ${mainOffice}/${subOffice}</p>
+                <p>Customer Mobile: ${customerId}</p>
+                <p>Payment Mode: ${paymentMode}</p>
+            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Category</th>
+                        <th>Product Name</th>
+                        <th>Item</th>
+                        <th>Unit Price (₹)</th>
+                        <th>Quantity</th>
+                        <th>Tax GST (₹)</th>
+                        <th>Tax CGST (₹)</th>
+                        <th>Other Charge (₹)</th>
+                        <th>Margin</th>
+                        <th>Unit MRP (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        const productRows = document.querySelectorAll('#productsTableBody tr');
+        let totalMrp = 0;
+        
+        productRows.forEach(row => {
+            const productId = row.querySelector('.product-id').value;
+            const product = purchaseData.find(p => p.productId === productId);
             
             if (product) {
-                row.querySelector('.category').value = product.category || '';
-                row.querySelector('.product').value = product.productName || '';
-                row.querySelector('.item-name').value = product.item || '';
-                row.querySelector('.unit-price').value = product.unitMrp || '0';
+                previewHTML += `
+                    <tr>
+                        <td>${product.productId}</td>
+                        <td>${product.category}</td>
+                        <td>${product.productName}</td>
+                        <td>${product.item}</td>
+                        <td>${product.unitPrice}</td>
+                        <td>${row.querySelector('.quantity').value}</td>
+                        <td>${row.querySelector('.tax-gst').value}</td>
+                        <td>${row.querySelector('.tax-cgst').value}</td>
+                        <td>${row.querySelector('.other-charge').value}</td>
+                        <td>${product.margin}</td>
+                        <td>${product.unitMrp}</td>
+                    </tr>
+                `;
                 
-                // Calculate initial amount
-                calculateAmount(input);
+                totalMrp += parseFloat(product.unitMrp) * parseInt(row.querySelector('.quantity').value);
             }
-        }
+        });
+        
+        previewHTML += `
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="10" class="text-end"><strong>Grand Total:</strong></td>
+                        <td><strong>₹ ${totalMrp.toFixed(2)}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+        
+        invoicePreview.innerHTML = previewHTML;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('invoicePreviewModal'));
+        modal.show();
+    }
 
-        // Calculate amount for a product row
-        function calculateAmount(input) {
-            const row = input.closest('tr');
-            const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
-            const quantity = parseInt(row.querySelector('.quantity').value) || 0;
-            const taxGst = parseFloat(row.querySelector('.tax-gst').value) || 0;
-            const taxCgst = parseFloat(row.querySelector('.tax-cgst').value) || 0;
-            const otherCharge = parseFloat(row.querySelector('.other-charge').value) || 0;
+    // Print PDF
+    function printPdf() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const invoicePreview = document.getElementById('invoicePreview');
+        
+        html2canvas(invoicePreview).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = doc.internal.pageSize.getWidth();
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
             
-            const amount = (unitPrice * quantity) + taxGst + taxCgst + otherCharge;
-            row.querySelector('.amount').value = amount.toFixed(2);
-            
-            updateGrandTotal();
-        }
+            doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            doc.save(`invoice_${document.getElementById('invoiceNo').value}.pdf`);
+        });
+    }
 
-        // Update grand total
-        function updateGrandTotal() {
-            const amountInputs = document.querySelectorAll('.amount');
-            let grandTotal = 0;
-            
-            amountInputs.forEach(input => {
-                grandTotal += parseFloat(input.value) || 0;
-            });
-            
-            document.getElementById('grandTotal').textContent = `₹ ${grandTotal.toFixed(2)}`;
-        }
+    // Reset form
+    function resetForm() {
+        document.getElementById('salesForm').reset();
+        document.getElementById('productsTableBody').innerHTML = '';
+        document.getElementById('grandTotal').textContent = '₹ 0.00';
+        generateInvoiceNo();
+        
+        // Reset hidden fields
+        const now = new Date();
+        document.getElementById('date').value = formatDate(now);
+        document.getElementById('time').value = formatTime(now);
+    }
 
-        // Preview PDF
-        function previewPdf() {
-            const invoicePreview = document.getElementById('invoicePreview');
-            const invoiceNo = document.getElementById('invoiceNo').value;
-            const mainOffice = document.getElementById('mainOffice').value;
-            const subOffice = document.getElementById('subOffice').value;
-            const customerId = document.getElementById('customerId').value;
-            const paymentMode = document.getElementById('paymentModeMain').value;
+    // Submit form
+    function submitForm(event) {
+        event.preventDefault();
+        
+        const submitButton = document.getElementById("saveBtn");
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        
+        // Generate invoice number if not already set
+        const invoiceNo = document.getElementById('invoiceNo').value || generateInvoiceNo();
+        
+        // Prepare form data
+        const formDataArray = [];
+        const productRows = document.querySelectorAll('#productsTableBody tr');
+        
+        productRows.forEach(row => {
+            const productId = row.querySelector('.product-id').value;
+            const product = purchaseData.find(p => p.productId === productId);
             
-            let previewHTML = `
-                <div class="invoice-header">
-                    <h2>Sales Invoice: ${invoiceNo}</h2>
-                    <p>Shop: ${mainOffice}/${subOffice}</p>
-                    <p>Customer Mobile: ${customerId}</p>
-                    <p>Payment Mode: ${paymentMode}</p>
-                </div>
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Product ID</th>
-                            <th>Category</th>
-                            <th>Product Name</th>
-                            <th>Item</th>
-                            <th>Unit Price (₹)</th>
-                            <th>Quantity</th>
-                            <th>Tax GST (₹)</th>
-                            <th>Tax CGST (₹)</th>
-                            <th>Other Charge (₹)</th>
-                            <th>Margin</th>
-                            <th>Unit MRP (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            const productRows = document.querySelectorAll('#productsTableBody tr');
-            let totalMrp = 0;
-            
-            productRows.forEach(row => {
-                const productId = row.querySelector('.product-id').value;
-                const product = productData.find(p => p.productId === productId);
+            if (product) {
+                const formData = {
+                    mainOffice: "'"+document.getElementById('mainOffice').value,
+                    subOffice: "'"+document.getElementById('subOffice').value,
+                    date: "'"+document.getElementById('date').value,
+                    employeeId: "'"+document.getElementById('employeeId').value,
+                    time: "'"+document.getElementById('time').value,
+                    customerId: "'"+document.getElementById('customerId').value,
+                    invoiceNo: "'"+invoiceNo,
+                    productId: "'"+productId,
+                    category: product.category,
+                    product: product.productName,
+                    itemName: product.item,
+                    unitPrice: "'"+product.unitPrice,
+                    quantity: "'"+row.querySelector('.quantity').value,
+                    taxGst: "'"+row.querySelector('.tax-gst').value,
+                    taxCgst: "'"+row.querySelector('.tax-cgst').value,
+                    otherCharge: "'"+row.querySelector('.other-charge').value,
+                    unitMrp: "'"+product.unitMrp,
+                    paymentMode: row.querySelector('.payment-mode').value,
+                    confirm: "No"
+                };
                 
-                if (product) {
-                    previewHTML += `
-                        <tr>
-                            <td>${product.productId}</td>
-                            <td>${product.category}</td>
-                            <td>${product.productName}</td>
-                            <td>${product.item}</td>
-                            <td>${product.unitPrice}</td>
-                            <td>${row.querySelector('.quantity').value}</td>
-                            <td>${row.querySelector('.tax-gst').value}</td>
-                            <td>${row.querySelector('.tax-cgst').value}</td>
-                            <td>${row.querySelector('.other-charge').value}</td>
-                            <td>${product.margin}</td>
-                            <td>${product.unitMrp}</td>
-                        </tr>
-                    `;
-                    
-                    totalMrp += parseFloat(product.unitMrp) * parseInt(row.querySelector('.quantity').value);
-                }
+                formDataArray.push(formData);
+            }
+        });
+        
+        // Submit each product row
+        const submitPromises = formDataArray.map(formData => {
+            const urlEncodedData = new URLSearchParams(formData).toString();
+            
+            return fetch('https://script.google.com/macros/s/AKfycbzvRXmX6rvngL8AXqhdY5IesjlmVjP-dHiArNBSK--Gd0joh-XGYMPflBH3ZuwamIPeMA/exec', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: urlEncodedData
             });
-            
-            previewHTML += `
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="10" class="text-end"><strong>Grand Total:</strong></td>
-                            <td><strong>₹ ${totalMrp.toFixed(2)}</strong></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            `;
-            
-            invoicePreview.innerHTML = previewHTML;
-            
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('invoicePreviewModal'));
-            modal.show();
-        }
-
-        // Print PDF
-        function printPdf() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            const invoicePreview = document.getElementById('invoicePreview');
-            
-            html2canvas(invoicePreview).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = doc.internal.pageSize.getWidth();
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        });
+        
+        // Wait for all submissions to complete
+        Promise.all(submitPromises)
+            .then(responses => {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Invoice';
                 
-                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-                doc.save(`invoice_${document.getElementById('invoiceNo').value}.pdf`);
-            });
-        }
-
-        // Reset form
-        function resetForm() {
-            document.getElementById('salesForm').reset();
-            document.getElementById('productsTableBody').innerHTML = '';
-            document.getElementById('grandTotal').textContent = '₹ 0.00';
-            generateInvoiceNo();
-            
-            // Reset hidden fields
-            const now = new Date();
-            document.getElementById('date').value = formatDate(now);
-            document.getElementById('time').value = formatTime(now);
-        }
-
-        // Submit form
-        function submitForm(event) {
-            event.preventDefault();
-            
-            const submitButton = document.getElementById("saveBtn");
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-            
-            // Generate invoice number if not already set
-            const invoiceNo = document.getElementById('invoiceNo').value || generateInvoiceNo();
-            
-            // Prepare form data
-            const formDataArray = [];
-            const productRows = document.querySelectorAll('#productsTableBody tr');
-            
-            productRows.forEach(row => {
-                const productId = row.querySelector('.product-id').value;
-                const product = productData.find(p => p.productId === productId);
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Sales invoice saved successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
                 
-                if (product) {
-                    const formData = {
-                        mainOffice: "'"+document.getElementById('mainOffice').value,
-                        subOffice: "'"+document.getElementById('subOffice').value,
-                        date: "'"+document.getElementById('date').value,
-                        employeeId: "'"+document.getElementById('employeeId').value,
-                        time: "'"+document.getElementById('time').value,
-                        customerId: "'"+document.getElementById('customerId').value,
-                        invoiceNo: "'"+invoiceNo,
-                        productId: "'"+productId,
-                        category: product.category,
-                        product: product.productName,
-                        itemName: product.item,
-                        unitPrice: "'"+product.unitPrice,
-                        quantity: "'"+row.querySelector('.quantity').value,
-                        taxGst: "'"+row.querySelector('.tax-gst').value,
-                        taxCgst: "'"+row.querySelector('.tax-cgst').value,
-                        otherCharge: "'"+row.querySelector('.other-charge').value,
-                        unitMrp: "'"+product.unitMrp,
-                        paymentMode: row.querySelector('.payment-mode').value,
-                        confirm: "No"
-                    };
-                    
-                    formDataArray.push(formData);
-                }
-            });
-            
-            // Submit each product row
-            const submitPromises = formDataArray.map(formData => {
-                const urlEncodedData = new URLSearchParams(formData).toString();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Invoice';
                 
-                return fetch('https://script.google.com/macros/s/AKfycbzvRXmX6rvngL8AXqhdY5IesjlmVjP-dHiArNBSK--Gd0joh-XGYMPflBH3ZuwamIPeMA/exec', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: urlEncodedData
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'There was an issue saving the invoice. Please try again.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
                 });
             });
-            
-            // Wait for all submissions to complete
-            Promise.all(submitPromises)
-                .then(responses => {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Invoice';
-                    
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Sales invoice saved successfully!',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
-					
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Invoice';
-                    
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'There was an issue saving the invoice. Please try again.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                });
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
