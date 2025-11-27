@@ -337,22 +337,22 @@
             
             // Prepare form data
             const formData = {
-                mainOffice: document.getElementById('mainOffice').value,
-                subOffice: document.getElementById('subOffice').value,
-                date: document.getElementById('date').value,
+                mainOffice: "'"+document.getElementById('mainOffice').value,
+                subOffice: "'"+document.getElementById('subOffice').value,
+                date: "'"+document.getElementById('date').value,
                 employeeName: document.getElementById('employeeName').value,
-                employeeId: document.getElementById('employeeId').value,
+                employeeId: "'"+document.getElementById('employeeId').value,
                 designation: document.getElementById('designation').value,
                 address: document.getElementById('address').value,
                 email: document.getElementById('email').value,
-                phoneNo: document.getElementById('phoneNo').value,
+                phoneNo:"'"+ document.getElementById('phoneNo').value,
                 confirm: document.getElementById('confirm').value
             };
             
             // Submit to Google Sheets
             const urlEncodedData = new URLSearchParams(formData).toString();
             
-            fetch('https://script.google.com/macros/s/AKfycbzvRXmX6rvngL8AXqhdY5IesjlmVjP-dHiArNBSK--Gd0joh-XGYMPflBH3ZuwamIPeMA/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbxD6QVHZXmHu7sU2VjODcZWt2ry7rLFGriKff1z_Q1xHrjfrVlM5VTP_l8LXtGTw2IRfw/exec', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
