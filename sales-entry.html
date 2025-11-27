@@ -87,6 +87,21 @@
             border-bottom: 2px solid #0e56d1;
             padding-bottom: 10px;
         }
+        .payment-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .balance-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .balance-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body style="background-color:#e8f0fe;">
@@ -193,6 +208,37 @@
                                 </table>
                             </div>
 
+                            <!-- Payment Information Section -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="payment-section">
+                                        <h5 class="section-title">Payment Information</h5>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="grandTotalDisplay" class="form-label">Total Bill Amount</label>
+                                                <input type="text" class="form-control" id="grandTotalDisplay" readonly style="font-weight: bold; font-size: 1.1em;">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="amountGiven" class="form-label">Amount Given by Customer (₹)</label>
+                                                <input type="number" class="form-control" id="amountGiven" min="0" step="0.01" value="0">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="balanceAmount" class="form-label">Balance Amount (₹)</label>
+                                                <input type="text" class="form-control" id="balanceAmount" readonly style="font-weight: bold; font-size: 1.1em;">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div id="balanceMessage" class="alert alert-info mt-2" style="display: none;">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    <span id="balanceText"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Action Buttons -->
                             <div class="row mt-4">
                                 <div class="col-md-4 mb-2">
@@ -284,6 +330,9 @@
         document.getElementById('printPdfBtn').addEventListener('click', printPdf);
         document.getElementById('resetBtn').addEventListener('click', resetForm);
         document.getElementById('salesForm').addEventListener('submit', submitForm);
+        
+        // Payment information event listeners
+        document.getElementById('amountGiven').addEventListener('input', calculateBalance);
     });
 
     // Format date as dd/mm/yyyy
@@ -594,6 +643,40 @@
         });
         
         document.getElementById('grandTotal').textContent = `₹ ${grandTotal.toFixed(2)}`;
+        document.getElementById('grandTotalDisplay').value = `₹ ${grandTotal.toFixed(2)}`;
+        
+        // Recalculate balance when grand total changes
+        calculateBalance();
+    }
+
+    // Calculate balance amount
+    function calculateBalance() {
+        const grandTotalText = document.getElementById('grandTotal').textContent;
+        const grandTotal = parseFloat(grandTotalText.replace('₹', '').trim()) || 0;
+        const amountGiven = parseFloat(document.getElementById('amountGiven').value) || 0;
+        
+        const balance = amountGiven - grandTotal;
+        const balanceAmountField = document.getElementById('balanceAmount');
+        const balanceMessage = document.getElementById('balanceMessage');
+        const balanceText = document.getElementById('balanceText');
+        
+        if (balance === 0) {
+            balanceAmountField.value = `₹ 0.00`;
+            balanceAmountField.className = 'form-control';
+            balanceMessage.style.display = 'none';
+        } else if (balance > 0) {
+            balanceAmountField.value = `₹ ${balance.toFixed(2)}`;
+            balanceAmountField.className = 'form-control balance-positive';
+            balanceMessage.style.display = 'block';
+            balanceText.textContent = `Balance to be returned to customer: ₹ ${balance.toFixed(2)}`;
+            balanceMessage.className = 'alert alert-success mt-2';
+        } else {
+            balanceAmountField.value = `₹ ${Math.abs(balance).toFixed(2)}`;
+            balanceAmountField.className = 'form-control balance-negative';
+            balanceMessage.style.display = 'block';
+            balanceText.textContent = `Balance to be collected from customer: ₹ ${Math.abs(balance).toFixed(2)}`;
+            balanceMessage.className = 'alert alert-warning mt-2';
+        }
     }
 
     // Preview PDF
@@ -604,6 +687,8 @@
         const subOffice = document.getElementById('subOffice').value;
         const customerId = document.getElementById('customerId').value;
         const paymentMode = document.getElementById('paymentModeMain').value;
+        const amountGiven = document.getElementById('amountGiven').value;
+        const balanceAmount = document.getElementById('balanceAmount').value;
         
         let previewHTML = `
             <div class="invoice-header">
@@ -668,6 +753,14 @@
                     </tr>
                 </tfoot>
             </table>
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <p><strong>Amount Given:</strong> ₹ ${amountGiven}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Balance Amount:</strong> ${balanceAmount}</p>
+                </div>
+            </div>
         `;
         
         invoicePreview.innerHTML = previewHTML;
@@ -699,6 +792,10 @@
         document.getElementById('salesForm').reset();
         document.getElementById('productsTableBody').innerHTML = '';
         document.getElementById('grandTotal').textContent = '₹ 0.00';
+        document.getElementById('grandTotalDisplay').value = '₹ 0.00';
+        document.getElementById('amountGiven').value = '0';
+        document.getElementById('balanceAmount').value = '₹ 0.00';
+        document.getElementById('balanceMessage').style.display = 'none';
         generateInvoiceNo();
         
         // Reset hidden fields
